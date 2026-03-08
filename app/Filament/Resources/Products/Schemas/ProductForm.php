@@ -23,6 +23,7 @@ class ProductForm
 
                 TextInput::make('name')
                     ->required(),
+                TextInput::make('ar_name'),
 
                 TextInput::make('link')
                     ->url(),
@@ -70,6 +71,8 @@ class ProductForm
                             ->url(),
 
                         Textarea::make('description')
+                            ->columnSpanFull(),
+                        Textarea::make('ar_description')
                             ->columnSpanFull(),
 
                     ])

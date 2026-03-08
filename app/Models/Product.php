@@ -11,8 +11,10 @@ class Product extends Model
     protected $fillable = [
         'group_id',
         'name',
+        'ar_name',
         'link',
         'description',
+        'ar_description',
     ];
 
     public function group(): BelongsTo
