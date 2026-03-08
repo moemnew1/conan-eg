@@ -12,6 +12,7 @@ class ProductVariant extends Model
         'code',
         'link',
         'description',
+        'ar_description',
     ];
 
     public function product(): BelongsTo

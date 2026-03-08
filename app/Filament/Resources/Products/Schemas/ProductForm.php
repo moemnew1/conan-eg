@@ -30,6 +30,8 @@ class ProductForm
 
                 Textarea::make('description')
                     ->columnSpanFull(),
+                                            Textarea::make('ar_description')
+                            ->columnSpanFull(),
 
                 /*
                 |--------------------------------------------------------------------------
