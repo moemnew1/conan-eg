@@ -14,7 +14,11 @@ class GroupForm
             ->components([
                 TextInput::make('name')
                     ->required(),
+                TextInput::make('ar_name')
+                    ->required(),
                 FileUpload::make('image')
+                    ->directory('groups')
+                    ->disk('public')
                     ->image(),
             ]);
     }
