@@ -36,23 +36,27 @@ export default function MainLayout({ children }: MainLayoutProps) {
         window.location.href = newUrl;
     };
 
-    return (
-        <div dir={c.dir} className={`${fontClass} bg-white text-gray-900 overflow-x-hidden`}>
-            <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&display=swap');
-                .font-inter { font-family: 'Inter', sans-serif; }
-                .font-cairo { font-family: 'Cairo', sans-serif; }
-            `}</style>
+return (
+    <div
+        dir={c.dir}
+        className={`${fontClass} bg-white text-gray-900 overflow-x-hidden min-h-screen flex flex-col`}
+    >
+        <style>{`
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&display=swap');
+            .font-inter { font-family: 'Inter', sans-serif; }
+            .font-cairo { font-family: 'Cairo', sans-serif; }
+        `}</style>
 
-            <Navbar lang={lang} setLang={setLang} />
+        <Navbar lang={lang} setLang={setLang} />
 
-            <main className="pt-16">
-                {children({ lang, c, isRtl })}
-            </main>
+        {/* main expands to push footer down */}
+        <main className="pt-16 flex-1">
+            {children({ lang, c, isRtl })}
+        </main>
 
-            <WhatsAppButton isRtl={isRtl} />
+        <WhatsAppButton isRtl={isRtl} />
 
-            <Footer lang={lang} setLang={setLang} />
-        </div>
-    );
+        <Footer lang={lang} setLang={setLang} />
+    </div>
+);
 }
