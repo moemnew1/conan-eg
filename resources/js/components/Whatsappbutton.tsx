@@ -5,24 +5,45 @@ interface WhatsAppButtonProps {
 
 export default function WhatsAppButton({
     isRtl = false,
-    phone = '201067718255',
+    phone = "201067718255",
 }: WhatsAppButtonProps) {
     return (
-        <a
-            href={`https://wa.me/${phone}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Chat on WhatsApp"
-            className="fixed bottom-6 z-50 flex items-center justify-center w-14 h-14 rounded-full hover:scale-110 active:scale-95 transition-transform duration-200"
-            style={{
-                background: '#25D366',
-                [isRtl ? 'left' : 'right']: '1.5rem',
-                boxShadow: '0 4px 20px rgba(37,211,102,0.45)',
-            }}
+        <div
+            className="fixed bottom-6 z-50 group"
+            style={{ [isRtl ? "left" : "right"]: "1.5rem" }}
         >
-            <svg viewBox="0 0 32 32" width="28" height="28" fill="white" xmlns="http://www.w3.org/2000/svg">
-                <path d="M16.003 2.667C8.637 2.667 2.667 8.637 2.667 16c0 2.354.637 4.653 1.846 6.667L2.667 29.333l6.854-1.796A13.267 13.267 0 0 0 16.003 29.333c7.364 0 13.334-5.97 13.334-13.333S23.367 2.667 16.003 2.667zm0 24A10.6 10.6 0 0 1 10.4 25.04l-.373-.222-3.872 1.015 1.032-3.762-.243-.386A10.587 10.587 0 0 1 5.333 16c0-5.88 4.787-10.667 10.67-10.667S26.67 10.12 26.67 16 21.884 26.667 16.003 26.667zm5.864-7.974c-.32-.16-1.895-.935-2.189-1.042-.294-.107-.508-.16-.722.16-.214.32-.829 1.042-.016 1.256.294.107 2.19 1.042 2.51 1.202.32.16.614.134.829-.08.214-.213.855-.962 1.069-1.175.214-.214.428-.24.722-.08.294.16 1.869.882 2.19 1.042.32.16.535.24.614.373.08.134.08.775-.187 1.523-.267.748-1.576 1.43-2.19 1.523-.561.08-1.27.107-2.056-.134-.474-.148-1.082-.347-1.87-.68-3.29-1.416-5.44-4.77-5.6-4.99-.16-.214-1.31-1.736-1.31-3.31 0-1.576.829-2.35 1.123-2.67.294-.32.642-.4.856-.4.214 0 .428.002.615.01.197.01.46-.074.72.548.267.64.907 2.217 0 2.377-.16.107-.32.267-.48.4-.16.134-.32.294-.134.574.187.28.829 1.363 1.776 2.207 1.216 1.082 2.243 1.416 2.563 1.576z" />
-            </svg>
-        </a>
+            {/* Tooltip */}
+            <div
+                className={`absolute bottom-1/2 translate-y-1/2 ${
+                    isRtl ? "left-20" : "right-20"
+                } opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+            >
+                <div className="bg-gray-900 text-white text-sm px-3 py-2 rounded-lg shadow-lg whitespace-nowrap">
+                    Chat with us on WhatsApp
+                </div>
+            </div>
+
+            {/* Button */}
+            <a
+                href={`https://wa.me/${phone}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Chat on WhatsApp"
+                className="relative flex items-center justify-center w-16 h-16 rounded-full bg-[#25D366] hover:scale-110 active:scale-95 transition-all duration-300 shadow-lg"
+            >
+                {/* Pulse Ring */}
+                <span className="absolute inline-flex h-full w-full rounded-full bg-[#25D366] opacity-75 animate-ping"></span>
+
+                {/* Icon */}
+                <svg
+                    viewBox="0 0 24 24"
+                    className="w-8 h-8 relative z-10"
+                    fill="white"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+                    <path d="M12.04 2C6.58 2 2.16 6.42 2.16 11.88c0 1.92.5 3.8 1.46 5.45L2 22l4.8-1.57a9.84 9.84 0 005.24 1.53c5.46 0 9.88-4.42 9.88-9.88S17.5 2 12.04 2zm0 17.9a8 8 0 01-4.27-1.23l-.31-.2-2.85.93.93-2.78-.2-.32a8 8 0 01-1.23-4.27c0-4.42 3.6-8.02 8.02-8.02 4.42 0 8.02 3.6 8.02 8.02 0 4.42-3.6 8.02-8.02 8.02zm4.38-5.93c-.24-.12-1.42-.7-1.64-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06-.24-.12-1-.37-1.9-1.17-.7-.62-1.18-1.38-1.32-1.62-.14-.24-.02-.37.1-.49.1-.1.24-.26.36-.39.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.2-.48-.4-.42-.54-.43h-.46c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2 0 1.18.86 2.32.98 2.48.12.16 1.7 2.6 4.12 3.64.58.25 1.03.4 1.38.51.58.18 1.1.16 1.52.1.46-.07 1.42-.58 1.62-1.14.2-.56.2-1.04.14-1.14-.06-.1-.22-.16-.46-.28z" />
+                </svg>
+            </a>
+        </div>
     );
 }
