@@ -8,28 +8,25 @@ interface NavbarProps {
     setLang: (lang: Lang) => void;
 }
 
-const NAV_ROUTES = {
-    products: '/products',
-    about: '/about',
-    contact: '/contact',
-} as const;
-
 export default function Navbar({ lang, setLang }: NavbarProps) {
     const [scrolled, setScrolled] = useState(false);
     const { url } = usePage();
     const c = ui[lang];
+
+    // Build a prefixed href — /en/about or /ar/about
+    const prefixed = (path: string) => `/${lang}${path}`;
+
+    const navItems = [
+        { label: c.nav.products, path: '/products' },
+        { label: c.nav.about,    path: '/about' },
+        { label: c.nav.contact,  path: '/contact' },
+    ];
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 50);
         window.addEventListener('scroll', onScroll);
         return () => window.removeEventListener('scroll', onScroll);
     }, []);
-
-    const navItems = [
-        { label: c.nav.products, href: NAV_ROUTES.products },
-        { label: c.nav.about,    href: NAV_ROUTES.about },
-        { label: c.nav.contact,  href: NAV_ROUTES.contact },
-    ];
 
     return (
         <header
@@ -40,7 +37,7 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
             <div className="max-w-6xl mx-auto h-16 flex items-center justify-between gap-6">
 
                 {/* Logo */}
-                <Link href="/" className="flex items-center shrink-0">
+                <Link href={prefixed('')} className="flex items-center shrink-0">
                     <img
                         src="/storage/logo.png"
                         alt="Conan Tools"
@@ -51,11 +48,12 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
                 {/* Links — hidden on mobile */}
                 <nav className="hidden md:flex gap-8">
                     {navItems.map((item) => {
-                        const active = url.startsWith(item.href);
+                        const href = prefixed(item.path);
+                        const active = url.includes(item.path);
                         return (
                             <Link
-                                key={item.href}
-                                href={item.href}
+                                key={item.path}
+                                href={href}
                                 className={`text-sm font-medium transition-colors ${
                                     active
                                         ? 'text-[#FF9E1A]'
@@ -84,7 +82,7 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
                         </button>
                     ))}
                     <Link
-                        href="/contact"
+                        href={prefixed('/contact')}
                         className="ms-1 px-4 py-2 rounded-md text-sm font-semibold text-white transition-opacity hover:opacity-85 inline-block"
                         style={{ background: '#FF9E1A' }}
                     >

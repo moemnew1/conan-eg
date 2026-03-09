@@ -1,11 +1,27 @@
 <?php
 
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ContactController;
 use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
-Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/contact', fn () => inertia('Contactpage'))->name('contact');
-Route::get('/about', fn () => inertia('AboutPage'))->name('about');
+
+// ── Redirect bare / to /en ────────────────────────────────────────────────────
+Route::get('/', fn () => redirect('/en'))->name('home'); // keeps 'home' for auth layouts
+
+// ── English prefix /en ────────────────────────────────────────────────────────
+Route::prefix('en')->middleware('set.locale')->name('en.')->group(function () {
+    Route::get('/',        [HomeController::class, 'index'])->name('home');
+    Route::get('/about',   fn () => inertia('AboutPage'))->name('about');
+    Route::get('/contact', fn () => inertia('Contactpage'))->name('contact');
+});
+
+// ── Arabic prefix /ar ─────────────────────────────────────────────────────────
+Route::prefix('ar')->middleware('set.locale')->name('ar.')->group(function () {
+    Route::get('/',        [HomeController::class, 'index'])->name('home');
+    Route::get('/about',   fn () => inertia('AboutPage'))->name('about');
+    Route::get('/contact', fn () => inertia('Contactpage'))->name('contact');
+});
+
+// ── Authenticated routes ──────────────────────────────────────────────────────
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
 });
