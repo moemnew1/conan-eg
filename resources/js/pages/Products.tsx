@@ -554,7 +554,7 @@ export default function ProductsPage() {
                                             {modalProduct.variants.length > 0 && (
                                                 <div>
                                                     <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">
-                                                        {isRtl ? 'المتغيرات / الأكواد' : 'Variants / Codes'}
+                                                        {isRtl ? 'الخيارات / الأكواد' : 'Variants / Codes'}
                                                     </div>
                                                     <div className="flex flex-col gap-2">
                                                         {modalProduct.variants.map(v => (
@@ -674,7 +674,7 @@ function ProductCard({ product, name, description, isRtl, onClick }: ProductCard
                 {product.variants.length > 0 && (
                     <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold"
                         style={{ background: 'rgba(255,158,26,0.9)', color: 'white' }}>
-                        {product.variants.length} {isRtl ? 'متغير' : 'variants'}
+                        {product.variants.length} {isRtl ? 'خيار' : 'variants'}
                     </span>
                 )}
             </div>
