@@ -16,4 +16,8 @@ class Distributor extends Model
         'ar_name',
         'ar_address',
     ];
+    public function phones()
+{
+    return $this->hasMany(DistributorPhone::class)->orderBy('sort');
+}
 }

@@ -4,8 +4,9 @@ namespace App\Filament\Resources\Distributors\Schemas;
 
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
-use Filament\Schemas\Schema;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Repeater;
+use Filament\Schemas\Schema;
 
 class DistributorForm
 {
@@ -42,6 +43,25 @@ class DistributorForm
                 TextInput::make('google_maps_link')
                     ->url()
                     ->columnSpanFull(),
+
+                // ── Phones Repeater ─────────────────────
+                Repeater::make('phones')
+                    ->label('Phones')
+                    ->relationship('phones') // must match the relation in Distributor model
+                    ->schema([
+                        TextInput::make('phone')
+                            ->required()
+                            ->label('Phone Number')
+                            ->tel(), // makes it a telephone input
+
+                        TextInput::make('sort')
+                            ->numeric()
+                            ->label('Sort Order')
+                            ->default(0),
+                    ])
+                    ->columns(2)
+                    ->orderable('sort') // allows drag & drop sorting
+                    ->createItemButtonLabel('Add Phone'),
             ]);
     }
 }

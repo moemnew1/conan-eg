@@ -109,31 +109,37 @@ class HomeController extends Controller
             'locale'      => app()->getLocale(), // ← added
         ]);
     }
-    public function distributors(): Response
+public function distributors(): Response
 {
-    $distributors = Distributor::select(
-        'id',
-        'name',
-        'ar_name',
-        'logo',
-        'address',
-        'ar_address',
-        'latitude',
-        'longitude',
-        'google_maps_link'
-    )
-    ->get()
-    ->map(fn ($d) => [
-        'id' => $d->id,
-        'name' => $d->name,
-        'ar_name' => $d->ar_name,
-        'logo' => $d->logo ? asset('storage/'.$d->logo) : null,
-        'address' => $d->address,
-        'ar_address' => $d->ar_address,
-        'latitude' => $d->latitude,
-        'longitude' => $d->longitude,
-        'google_maps_link' => $d->google_maps_link,
-    ]);
+    $distributors = Distributor::with(['phones' => fn($q) => $q->orderBy('sort')])
+        ->select(
+            'id',
+            'name',
+            'ar_name',
+            'logo',
+            'address',
+            'ar_address',
+            'latitude',
+            'longitude',
+            'google_maps_link'
+        )
+        ->get()
+        ->map(fn ($d) => [
+            'id' => $d->id,
+            'name' => $d->name,
+            'ar_name' => $d->ar_name,
+            'logo' => $d->logo ? asset('storage/' . $d->logo) : null,
+            'address' => $d->address,
+            'ar_address' => $d->ar_address,
+            'latitude' => $d->latitude,
+            'longitude' => $d->longitude,
+            'google_maps_link' => $d->google_maps_link,
+            'phones' => $d->phones->map(fn($p) => [
+                'id' => $p->id,
+                'phone' => $p->phone,
+                'sort' => $p->sort,
+            ]),
+        ]);
 
     return Inertia::render('Distributors', [
         'distributors' => $distributors,
