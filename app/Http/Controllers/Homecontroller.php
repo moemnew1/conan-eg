@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Distributor;
 use App\Models\Group;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -108,4 +109,35 @@ class HomeController extends Controller
             'locale'      => app()->getLocale(), // ← added
         ]);
     }
+    public function distributors(): Response
+{
+    $distributors = Distributor::select(
+        'id',
+        'name',
+        'ar_name',
+        'logo',
+        'address',
+        'ar_address',
+        'latitude',
+        'longitude',
+        'google_maps_link'
+    )
+    ->get()
+    ->map(fn ($d) => [
+        'id' => $d->id,
+        'name' => $d->name,
+        'ar_name' => $d->ar_name,
+        'logo' => $d->logo ? asset('storage/'.$d->logo) : null,
+        'address' => $d->address,
+        'ar_address' => $d->ar_address,
+        'latitude' => $d->latitude,
+        'longitude' => $d->longitude,
+        'google_maps_link' => $d->google_maps_link,
+    ]);
+
+    return Inertia::render('Distributors', [
+        'distributors' => $distributors,
+        'locale' => app()->getLocale(),
+    ]);
+}
 }

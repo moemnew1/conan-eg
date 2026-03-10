@@ -13,5 +13,7 @@ class Distributor extends Model
         'latitude',
         'longitude',
         'google_maps_link',
+        'ar_name',
+        'ar_address',
     ];
 }

@@ -14,6 +14,7 @@ Route::prefix('en')->middleware('set.locale')->name('en.')->group(function () {
     Route::get('/products',  [HomeController::class, 'products'])->name('products');
     Route::get('/about',     fn () => inertia('AboutPage'))->name('about');
     Route::get('/contact',   fn () => inertia('Contactpage'))->name('contact');
+    Route::get('/distributors', [HomeController::class, 'distributors'])->name('distributors');
 });
 
 // ── Arabic prefix /ar ─────────────────────────────────────────────────────────
@@ -22,6 +23,7 @@ Route::prefix('ar')->middleware('set.locale')->name('ar.')->group(function () {
     Route::get('/products',  [HomeController::class, 'products'])->name('products');
     Route::get('/about',     fn () => inertia('AboutPage'))->name('about');
     Route::get('/contact',   fn () => inertia('Contactpage'))->name('contact');
+    Route::get('/distributors', [HomeController::class, 'distributors'])->name('distributors');
 });
 
 // ── Authenticated routes ──────────────────────────────────────────────────────

@@ -3,8 +3,13 @@ import type { Lang } from '@/types/I18n';
 export const ui = {
     en: {
         dir: 'ltr' as const,
-        nav: { products: 'Products', about: 'About', contact: 'Contact', cta: 'Get a Quote' },
-        hero: {
+    nav: { 
+        products: 'Products', 
+        distributors: 'Distributors',
+        about: 'About', 
+        contact: 'Contact', 
+        cta: 'Get a Quote' 
+    },        hero: {
             title: 'Professional Tools, Built to Last',
             sub: 'Power tools, hand tools & garden tools — trusted by professionals across Egypt.',
             cta1: 'Browse Products',
@@ -46,7 +51,13 @@ export const ui = {
     },
     ar: {
         dir: 'rtl' as const,
-        nav: { products: 'المنتجات', about: 'من نحن', contact: 'اتصل بنا', cta: 'طلب عرض سعر' },
+            nav: { 
+        products: 'المنتجات', 
+        distributors: 'الموزعين',
+        about: 'من نحن', 
+        contact: 'اتصل بنا', 
+        cta: 'طلب عرض سعر' 
+    },
         hero: {
             title: 'أدوات احترافية، مصنوعة لتدوم',
             sub: 'أدوات كهربائية ويدوية وحدائق — موثوقة من قِبل المحترفين في جميع أنحاء مصر.',

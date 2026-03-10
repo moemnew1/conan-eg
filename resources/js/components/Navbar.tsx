@@ -17,8 +17,10 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
 
     const prefixed = (path: string) => `/${lang}${path}`;
 
+    // ── Add distributors to nav
     const navItems = [
         { label: c.nav.products, path: "/products" },
+        { label: c.nav.distributors, path: "/distributors" }, // <-- new
         { label: c.nav.about, path: "/about" },
         { label: c.nav.contact, path: "/contact" },
     ];
