@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { usePage, router } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import MainLayout from '@/layouts/Mainlayout';
+import Seo from '@/components/Seo';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -10,6 +11,7 @@ interface Group {
     name: string;
     ar_name: string | null;
     image: string | null;
+    slug: string;
     product_count: number;
 }
 
@@ -60,6 +62,25 @@ export default function HomePage() {
 
                 return (
                     <>
+                        <Seo
+                            title={
+                                lang === 'ar'
+                                    ? 'كونان تولز | أدوات احترافية ومعدات صناعية في مصر'
+                                    : 'Conan Tools | Professional Construction Tools in Egypt'
+                            }
+                            description={
+                                lang === 'ar'
+                                    ? 'كونان تولز تقدم أدوات ومعدات احترافية عالية الجودة للمقاولين والفنيين في مصر. اكتشف مجموعتنا من الأدوات الصناعية وحلول العمل المتطورة.'
+                                    : 'Conan Tools provides high-quality professional construction and industrial tools for contractors and technicians in Egypt. Explore our product categories and trusted solutions.'
+                            }
+                            keywords={
+                                isRtl
+                                    ? 'كونان تولز, الضمان, أدوات, مصر, أدوات كهربائية, أدوات يدوية'
+                                    : 'Conan Tools, warranty, tools, Egypt, power tools, hand tools'
+                            }
+                            image="/logo.png"
+                        />
+
                         {/* ── HERO ── */}
                         <motion.section
                             initial="hidden"
@@ -363,45 +384,11 @@ function ContactForm({ isRtl, c }: ContactFormProps) {
 
     return (
         <form onSubmit={handleSubmit} noValidate>
-            <input
-                required
-                type="text"
-                placeholder={c.namePh}
-                value={fields.name}
-                onChange={set('name')}
-                className={inputClass}
-            />
-            <input
-                type="email"
-                placeholder={c.emailPh}
-                value={fields.email}
-                onChange={set('email')}
-                className={inputClass}
-            />
-            <input
-                required
-                type="tel"
-                placeholder={isRtl ? 'رقم الهاتف / واتساب' : 'Phone / WhatsApp'}
-                value={fields.phone}
-                onChange={set('phone')}
-                className={inputClass}
-            />
-            <input
-                required
-                type="text"
-                placeholder={isRtl ? 'الموضوع' : 'Subject'}
-                value={fields.subject}
-                onChange={set('subject')}
-                className={inputClass}
-            />
-            <textarea
-                required
-                rows={4}
-                placeholder={c.msgPh}
-                value={fields.message}
-                onChange={set('message')}
-                className={`${inputClass} resize-none mb-5`}
-            />
+            <input required type="text" placeholder={c.namePh} value={fields.name} onChange={set('name')} className={inputClass} />
+            <input type="email" placeholder={c.emailPh} value={fields.email} onChange={set('email')} className={inputClass} />
+            <input required type="tel" placeholder={isRtl ? 'رقم الهاتف / واتساب' : 'Phone / WhatsApp'} value={fields.phone} onChange={set('phone')} className={inputClass} />
+            <input required type="text" placeholder={isRtl ? 'الموضوع' : 'Subject'} value={fields.subject} onChange={set('subject')} className={inputClass} />
+            <textarea required rows={4} placeholder={c.msgPh} value={fields.message} onChange={set('message')} className={`${inputClass} resize-none mb-5`} />
             <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -410,9 +397,7 @@ function ContactForm({ isRtl, c }: ContactFormProps) {
                 className="w-full py-3 rounded-lg font-semibold text-sm text-white disabled:opacity-60"
                 style={{ background: '#FF9E1A' }}
             >
-                {status === 'sending'
-                    ? (isRtl ? 'جارٍ الإرسال…' : 'Sending…')
-                    : c.btn}
+                {status === 'sending' ? (isRtl ? 'جارٍ الإرسال…' : 'Sending…') : c.btn}
             </motion.button>
         </form>
     );
@@ -436,36 +421,34 @@ function GroupCard({ group, name, viewLabel, productsLabel, fallbackIcon, locale
     return (
         <motion.div
             whileHover={{ y: -4, boxShadow: '0 8px 24px rgba(255,158,26,0.15)' }}
-            onClick={() => router.get(`/${locale}/products`, { group: group.id })}
-            className="border border-gray-100 rounded-xl overflow-hidden cursor-pointer group hover:border-[#FF9E1A] transition-all duration-200"
+            onClick={() => router.get(`/${locale}/products/${group.slug}`)}
+            className="border border-gray-100 rounded-xl overflow-hidden cursor-pointer group hover:border-[#FF9E1A] transition-all duration-200 bg-white flex flex-col"
         >
-            {showImage ? (
-                <div className="overflow-hidden w-full aspect-[4/3]">
+            {/* Image area — white bg, contain so product images show fully */}
+            <div className="w-full aspect-[4/3] bg-white flex items-center justify-center overflow-hidden relative">
+                {showImage ? (
                     <motion.img
-                        whileHover={{ scale: 1.05 }}
+                        whileHover={{ scale: 1.06 }}
                         transition={{ duration: 0.35, ease: 'easeOut' }}
                         src={group.image!}
                         alt={name}
-                        className="w-full h-full object-cover block bg-gray-100"
+                        className="w-full h-full object-contain p-3"
                         onError={() => setImgFailed(true)}
                     />
-                </div>
-            ) : (
-                <div
-                    className="w-full aspect-[4/3] flex items-center justify-center text-4xl"
-                    style={{ background: 'rgba(255,158,26,0.08)' }}
-                >
-                    {fallbackIcon}
-                </div>
-            )}
-            <div className="p-4">
-                <div className="font-bold text-sm mb-1 leading-snug">{name}</div>
+                ) : (
+                    <span className="text-4xl select-none">{fallbackIcon}</span>
+                )}
+            </div>
+
+            {/* Card body */}
+            <div className="p-4 bg-white flex flex-col flex-1 border-t border-gray-100">
+                <div className="font-bold text-sm mb-1 leading-snug text-gray-900">{name}</div>
                 {group.product_count > 0 && (
                     <div className="text-xs text-gray-400 mb-3">
                         {group.product_count} {productsLabel}
                     </div>
                 )}
-                <div className="text-xs font-semibold text-gray-400 group-hover:text-[#FF9E1A] transition-colors">
+                <div className="mt-auto text-xs font-semibold text-gray-400 group-hover:text-[#FF9E1A] transition-colors">
                     {viewLabel}
                 </div>
             </div>

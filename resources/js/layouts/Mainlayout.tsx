@@ -5,6 +5,7 @@ import { ui } from '@/lib/I18n';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/components/Whatsappbutton';
+import Seo from '@/components/Seo';
 
 interface MainLayoutProps {
     children: (ctx: { lang: Lang; c: typeof ui[Lang]; isRtl: boolean }) => ReactNode;
@@ -36,27 +37,30 @@ export default function MainLayout({ children }: MainLayoutProps) {
         window.location.href = newUrl;
     };
 
-return (
-    <div
-        dir={c.dir}
-        className={`${fontClass} bg-white text-gray-900 overflow-x-hidden min-h-screen flex flex-col`}
-    >
-        <style>{`
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&display=swap');
-            .font-inter { font-family: 'Inter', sans-serif; }
-            .font-cairo { font-family: 'Cairo', sans-serif; }
-        `}</style>
+    return (
+        <div
+            dir={c.dir}
+            className={`${fontClass} bg-white text-gray-900 overflow-x-hidden min-h-screen flex flex-col`}
+        >
+            {/* Global SEO */}
+            <Seo />
 
-        <Navbar lang={lang} setLang={setLang} />
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&display=swap');
+                .font-inter { font-family: 'Inter', sans-serif; }
+                .font-cairo { font-family: 'Cairo', sans-serif; }
+            `}</style>
 
-        {/* main expands to push footer down */}
-        <main className="pt-16 flex-1">
-            {children({ lang, c, isRtl })}
-        </main>
+            <Navbar lang={lang} setLang={setLang} />
 
-        <WhatsAppButton isRtl={isRtl} />
+            {/* main expands to push footer down */}
+            <main className="pt-16 flex-1">
+                {children({ lang, c, isRtl })}
+            </main>
 
-        <Footer lang={lang} setLang={setLang} />
-    </div>
-);
+            <WhatsAppButton isRtl={isRtl} />
+
+            <Footer lang={lang} setLang={setLang} />
+        </div>
+    );
 }

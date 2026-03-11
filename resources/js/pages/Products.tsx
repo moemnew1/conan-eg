@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { usePage, router } from '@inertiajs/react';
 import MainLayout from '@/layouts/Mainlayout';
+import Seo from '@/components/Seo';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -8,6 +9,7 @@ interface Group {
     id: number;
     name: string;
     ar_name: string | null;
+    slug: string;
     image: string | null;
     product_count: number;
 }
@@ -24,6 +26,7 @@ interface Product {
     id: number;
     name: string;
     ar_name: string | null;
+    slug: string;
     image: string | null;
     images: string[];
     description: string | null;
@@ -36,6 +39,7 @@ interface PageProps {
     groups: Group[];
     products: Product[] | null;
     activeGroup: Group | null;
+    activeProduct: Product | null;
     locale?: string;
     [key: string]: unknown;
 }
@@ -46,28 +50,35 @@ const FALLBACK_ICONS = ['⚡', '🔧', '🌿', '🔩', '🛠️', '⚙️', '�
 
 export default function ProductsPage() {
     const { props } = usePage<PageProps>();
-    const groups: Group[] = props.groups ?? [];
-    const products: Product[] = props.products ?? [];
-    const activeGroup: Group | null = props.activeGroup ?? null;
+    const groups: Group[]       = props.groups ?? [];
+    const products: Product[]   = props.products ?? [];
+    const activeGroup: Group | null   = props.activeGroup ?? null;
+    const activeProduct: Product | null = props.activeProduct ?? null;
     const locale = (props.locale as string) ?? 'en';
 
-    const [search, setSearch] = useState('');
-    const [animKey, setAnimKey] = useState<number | null>(activeGroup?.id ?? null);
-    const [isExiting, setIsExiting] = useState(false);
-    const [modalProduct, setModalProduct] = useState<Product | null>(null);
-    const [modalImageIdx, setModalImageIdx] = useState(0);
-    const [isSliding, setIsSliding] = useState(false);
-    const [slideDir, setSlideDir] = useState<'left' | 'right'>('right');
+    const [search, setSearch]         = useState('');
+    const [animKey, setAnimKey]       = useState<number | null>(activeGroup?.id ?? null);
+    const [isExiting, setIsExiting]   = useState(false);
+    const [modalProduct, setModalProduct]     = useState<Product | null>(activeProduct);
+    const [modalImageIdx, setModalImageIdx]   = useState(0);
+    const [isSliding, setIsSliding]           = useState(false);
+    const [slideDir, setSlideDir]             = useState<'left' | 'right'>('right');
 
     useEffect(() => {
         setAnimKey(activeGroup?.id ?? null);
         setIsExiting(false);
     }, [activeGroup?.id]);
 
-    // Close modal on Escape / arrow keys
+    useEffect(() => {
+        if (activeProduct) {
+            setModalProduct(activeProduct);
+            setModalImageIdx(0);
+        }
+    }, [activeProduct?.id]);
+
     useEffect(() => {
         const handler = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') setModalProduct(null);
+            if (e.key === 'Escape') closeModal();
             if (e.key === 'ArrowRight' && modalProduct) navigateImage('right');
             if (e.key === 'ArrowLeft'  && modalProduct) navigateImage('left');
         };
@@ -75,7 +86,6 @@ export default function ProductsPage() {
         return () => window.removeEventListener('keydown', handler);
     }, [modalProduct, modalImageIdx]);
 
-    // Lock body scroll when modal open
     useEffect(() => {
         document.body.style.overflow = modalProduct ? 'hidden' : '';
         return () => { document.body.style.overflow = ''; };
@@ -83,24 +93,21 @@ export default function ProductsPage() {
 
     const navigateImage = useCallback((dir: 'left' | 'right') => {
         if (!modalProduct || isSliding) return;
-        const max = modalProduct.images.length - 1;
+        const max  = modalProduct.images.length - 1;
         const next = dir === 'right'
             ? Math.min(modalImageIdx + 1, max)
             : Math.max(modalImageIdx - 1, 0);
         if (next === modalImageIdx) return;
         setSlideDir(dir);
         setIsSliding(true);
-        setTimeout(() => {
-            setModalImageIdx(next);
-            setIsSliding(false);
-        }, 260);
+        setTimeout(() => { setModalImageIdx(next); setIsSliding(false); }, 260);
     }, [modalProduct, modalImageIdx, isSliding]);
 
     const handleGroupClick = (group: Group) => {
-        if (group.id === activeGroup?.id) return;
+        if (group.slug === activeGroup?.slug) return;
         setIsExiting(true);
         setTimeout(() => {
-            router.get(`/${locale}/products`, { group: group.id }, { preserveState: false, preserveScroll: false });
+            router.get(`/${locale}/products/${group.slug}`, {}, { preserveState: false, preserveScroll: false });
             setSearch('');
         }, 200);
     };
@@ -117,7 +124,36 @@ export default function ProductsPage() {
         setModalProduct(product);
         setModalImageIdx(0);
         setIsSliding(false);
+        if (activeGroup) {
+            window.history.pushState(
+                { productSlug: product.slug },
+                '',
+                `/${locale}/products/${activeGroup.slug}/${product.slug}`
+            );
+        }
     };
+
+    const closeModal = () => {
+        setModalProduct(null);
+        if (activeProduct) {
+            router.get(
+                `/${locale}/products/${activeGroup?.slug ?? ''}`,
+                {},
+                { preserveState: false, preserveScroll: false }
+            );
+        } else if (activeGroup) {
+            window.history.pushState({}, '', `/${locale}/products/${activeGroup.slug}`);
+        }
+    };
+
+    useEffect(() => {
+        const handler = () => {
+            const parts = window.location.pathname.split('/').filter(Boolean);
+            if (parts.length < 4) setModalProduct(null);
+        };
+        window.addEventListener('popstate', handler);
+        return () => window.removeEventListener('popstate', handler);
+    }, []);
 
     const filteredProducts = useMemo(() => {
         if (!search.trim()) return products;
@@ -241,10 +277,52 @@ export default function ProductsPage() {
                     const productDesc = (p: Product) => lang === 'ar' && p.ar_description ? p.ar_description : p.description;
                     const variantDesc = (v: Variant) => lang === 'ar' && v.ar_description ? v.ar_description : v.description;
 
+                    const canonicalProduct = modalProduct ?? activeProduct;
+                    const canonicalUrl = canonicalProduct && activeGroup
+                        ? `/${locale}/products/${activeGroup.slug}/${canonicalProduct.slug}`
+                        : activeGroup
+                        ? `/${locale}/products/${activeGroup.slug}`
+                        : `/${locale}/products`;
+
                     return (
                         <>
+                        <Seo
+                            title={
+                                canonicalProduct
+                                    ? `${productName(canonicalProduct)} | Conan Tools`
+                                    : activeGroup
+                                    ? `${groupName(activeGroup)} | Conan Tools`
+                                    : (isRtl
+                                        ? 'منتجات كونان تولز | أدوات احترافية'
+                                        : 'Conan Tools Products | Professional Tools Catalog')
+                            }
+                            description={
+                                canonicalProduct
+                                    ? (
+                                        isRtl
+                                            ? `${productName(canonicalProduct)} من كونان تولز. ${productDesc(canonicalProduct) ?? 'أداة احترافية عالية الجودة للمقاولين والفنيين.'}${canonicalProduct.variants.length > 0 ? ` ${canonicalProduct.variants.length} خيارات متوفرة.` : ''}`
+                                            : `${productName(canonicalProduct)} from Conan Tools. ${productDesc(canonicalProduct) ?? 'High-quality professional tool for contractors and technicians.'}${canonicalProduct.variants.length > 0 ? ` ${canonicalProduct.variants.length} available variants.` : ''}`
+                                    )
+                                    : activeGroup
+                                    ? (
+                                        isRtl
+                                            ? `تصفح منتجات ${groupName(activeGroup)} من كونان تولز. أدوات احترافية عالية الجودة للاستخدام الصناعي والمقاولات.`
+                                            : `Browse ${groupName(activeGroup)} tools from Conan Tools. High-quality professional tools for construction and industrial use.`
+                                    )
+                                    : (
+                                        isRtl
+                                            ? 'تصفح جميع فئات منتجات كونان تولز من الأدوات الاحترافية والمعدات الصناعية.'
+                                            : 'Explore all Conan Tools product categories including professional and industrial tools.'
+                                    )
+                            }
+                            keywords={isRtl
+                                ? 'كونان تولز, المنتجات, أدوات, مصر, أدوات كهربائية, أدوات يدوية'
+                                : 'Conan Tools, products, tools, Egypt, power tools, hand tools'}
+                            image={canonicalProduct?.image ?? activeGroup?.image ?? '/logo.png'}
+                            canonical={canonicalUrl}
+                        />
+
                             {/* ── PAGE HEADER ── */}
-                           
                             <section className="pt-12 pb-10 px-[5%] bg-gray-50 border-b border-gray-100">
                                 <div className="max-w-6xl mx-auto">
                                     {activeGroup ? (
@@ -260,10 +338,13 @@ export default function ProductsPage() {
                                             </div>
                                             <div className="flex items-center gap-4 flex-wrap">
                                                 {activeGroup.image ? (
-                                                    <img src={activeGroup.image} alt={groupName(activeGroup)}
-                                                        className="w-14 h-14 rounded-xl object-cover border border-gray-200"
-                                                        style={{ animation: 'fadeSlideUp 0.4s cubic-bezier(.22,.68,0,1.2) both' }}
-                                                        onError={e => (e.currentTarget.style.display = 'none')} />
+                                                    /* White square thumbnail, image contained */
+                                                    <div className="w-14 h-14 rounded-xl border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0"
+                                                        style={{ animation: 'fadeSlideUp 0.4s cubic-bezier(.22,.68,0,1.2) both' }}>
+                                                        <img src={activeGroup.image} alt={`${groupName(activeGroup)} - Conan Tools`}
+                                                            className="w-full h-full object-contain p-1.5"
+                                                            onError={e => (e.currentTarget.style.display = 'none')} />
+                                                    </div>
                                                 ) : (
                                                     <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl border"
                                                         style={{ background: 'rgba(255,158,26,0.10)', borderColor: 'rgba(255,158,26,0.25)', animation: 'fadeSlideUp 0.4s cubic-bezier(.22,.68,0,1.2) both' }}>
@@ -318,7 +399,15 @@ export default function ProductsPage() {
                                                         ...(isActive ? { background: '#FF9E1A' } : {}),
                                                         animation: `fadeSlideUp 0.35s ${i * 0.04}s cubic-bezier(.22,.68,0,1.2) both`,
                                                     }}>
-                                                    <span className="text-base shrink-0">{FALLBACK_ICONS[i % FALLBACK_ICONS.length]}</span>
+                                                    {/* Sidebar: small white thumbnail or emoji */}
+                                                    {group.image ? (
+                                                        <div className={`w-7 h-7 rounded-lg overflow-hidden shrink-0 flex items-center justify-center bg-white border ${isActive ? 'border-orange-200' : 'border-gray-100'}`}>
+                                                            <img src={group.image} alt="" className="w-full h-full object-contain p-0.5"
+                                                                onError={e => (e.currentTarget.style.display = 'none')} />
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-base shrink-0">{FALLBACK_ICONS[i % FALLBACK_ICONS.length]}</span>
+                                                    )}
                                                     <span className="truncate">{groupName(group)}</span>
                                                     <span className={`ml-auto text-xs shrink-0 ${isActive ? 'text-orange-100' : 'text-gray-300'}`}>{group.product_count}</span>
                                                 </button>
@@ -373,6 +462,8 @@ export default function ProductsPage() {
                                                                         name={productName(product)}
                                                                         description={productDesc(product)}
                                                                         isRtl={isRtl}
+                                                                        groupSlug={activeGroup.slug}
+                                                                        locale={locale}
                                                                         onClick={() => openModal(product)}
                                                                     />
                                                                 </div>
@@ -381,26 +472,32 @@ export default function ProductsPage() {
                                                     </>
                                                 )
                                             ) : (
+                                                /* ── ALL GROUPS GRID ── */
                                                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                                     {groups.map((group, i) => (
                                                         <div key={group.id} className="group-card-enter" style={{ animationDelay: `${i * 0.07}s` }}>
                                                             <button onClick={() => handleGroupClick(group)}
-                                                                className="border border-gray-100 rounded-xl overflow-hidden cursor-pointer group hover:border-[#FF9E1A] hover:shadow-md transition-all duration-200 text-left w-full"
+                                                                className="border border-gray-100 rounded-xl overflow-hidden cursor-pointer group hover:border-[#FF9E1A] hover:shadow-md transition-all duration-200 text-left w-full bg-white flex flex-col"
                                                                 style={{ transition: 'transform 0.18s, box-shadow 0.18s, border-color 0.18s' }}
                                                                 onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-3px)')}
                                                                 onMouseLeave={e => (e.currentTarget.style.transform = '')}>
-                                                                {group.image ? (
-                                                                    <img src={group.image} alt={groupName(group)}
-                                                                        className="w-full aspect-[4/3] object-cover block bg-gray-100"
-                                                                        onError={e => (e.currentTarget.style.display = 'none')} />
-                                                                ) : (
-                                                                    <div className="w-full aspect-[4/3] flex items-center justify-center text-4xl"
-                                                                        style={{ background: 'rgba(255,158,26,0.08)' }}>
-                                                                        {FALLBACK_ICONS[i % FALLBACK_ICONS.length]}
-                                                                    </div>
-                                                                )}
-                                                                <div className="p-4">
-                                                                    <div className="font-bold text-sm mb-1 leading-snug">{groupName(group)}</div>
+
+                                                                {/* Image — white bg, object-contain */}
+                                                                <div className="w-full aspect-[4/3] bg-white flex items-center justify-center overflow-hidden">
+                                                                    {group.image ? (
+                                                                        <img
+                                                                            src={group.image}
+                                                                            alt={`${groupName(group)} - Conan Tools`}
+                                                                            className="w-full h-full object-contain p-4 transition-transform duration-300 ease-out group-hover:scale-105"
+                                                                            onError={e => (e.currentTarget.style.display = 'none')}
+                                                                        />
+                                                                    ) : (
+                                                                        <span className="text-4xl select-none">{FALLBACK_ICONS[i % FALLBACK_ICONS.length]}</span>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="p-4 border-t border-gray-100">
+                                                                    <div className="font-bold text-sm mb-1 leading-snug text-gray-900">{groupName(group)}</div>
                                                                     {group.product_count > 0 && (
                                                                         <div className="text-xs text-gray-400 mb-2">{group.product_count} {isRtl ? 'منتج' : 'products'}</div>
                                                                     )}
@@ -423,37 +520,27 @@ export default function ProductsPage() {
                                 <div
                                     className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
                                     style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)' }}
-                                    onClick={e => { if (e.target === e.currentTarget) setModalProduct(null); }}
+                                    onClick={e => { if (e.target === e.currentTarget) closeModal(); }}
                                 >
-                                    <div className="modal-box bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto flex flex-col">
+<div className="modal-box bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[72vh] overflow-hidden flex flex-col">
 
                                         {/* ── IMAGE CAROUSEL ── */}
                                         {modalProduct.images.length > 0 ? (
-                                            <div className="relative bg-gray-50 rounded-t-2xl overflow-hidden">
+                                            <div className="relative bg-white rounded-t-2xl overflow-hidden">
 
-                                                {/* Main image with directional slide */}
-                                                <div className="relative overflow-hidden aspect-video w-full bg-gray-100">
+                                                {/* Main image — white bg, object-contain */}
+                                                <div className="relative overflow-hidden aspect-video w-full bg-white flex items-center justify-center">
+
                                                     <img
                                                         key={`img-${modalImageIdx}-${slideDir}`}
                                                         src={modalProduct.images[modalImageIdx]}
-                                                        alt={productName(modalProduct)}
-                                                        className={`w-full h-full object-cover block absolute inset-0 ${
+                                                        alt={`${productName(modalProduct)} - Conan Tools`}
+                                                        className={`w-full h-full object-contain p-6 absolute inset-0 ${
                                                             isSliding
                                                                 ? (slideDir === 'right' ? 'img-slide-out-left' : 'img-slide-out-right')
                                                                 : (slideDir === 'right' ? 'img-slide-in-right' : 'img-slide-in-left')
                                                         }`}
                                                     />
-
-                                                    {/* Edge gradients */}
-                                                    {modalProduct.images.length > 1 && (
-                                                        <>
-                                                            <div className="absolute left-0 top-0 bottom-0 w-20 pointer-events-none z-10"
-                                                                style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.22), transparent)' }} />
-                                                            <div className="absolute right-0 top-0 bottom-0 w-20 pointer-events-none z-10"
-                                                                style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.22), transparent)' }} />
-                                                        </>
-                                                    )}
-
                                                     {/* Nav arrows */}
                                                     {modalProduct.images.length > 1 && (
                                                         <>
@@ -461,13 +548,13 @@ export default function ProductsPage() {
                                                                 onClick={() => navigateImage('left')}
                                                                 disabled={modalImageIdx === 0 || isSliding}
                                                                 className="nav-arrow absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full shadow-lg flex items-center justify-center text-xl font-bold text-gray-700 z-20"
-                                                                style={{ background: 'rgba(255,255,255,0.92)' }}
+                                                                style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid #e5e7eb' }}
                                                             >‹</button>
                                                             <button
                                                                 onClick={() => navigateImage('right')}
                                                                 disabled={modalImageIdx === modalProduct.images.length - 1 || isSliding}
                                                                 className="nav-arrow absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full shadow-lg flex items-center justify-center text-xl font-bold text-gray-700 z-20"
-                                                                style={{ background: 'rgba(255,255,255,0.92)' }}
+                                                                style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid #e5e7eb' }}
                                                             >›</button>
                                                         </>
                                                     )}
@@ -475,12 +562,12 @@ export default function ProductsPage() {
                                                     {/* Image counter pill */}
                                                     {modalProduct.images.length > 1 && (
                                                         <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-xs font-semibold text-white z-20"
-                                                            style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}>
+                                                            style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(4px)' }}>
                                                             {modalImageIdx + 1} / {modalProduct.images.length}
                                                         </div>
                                                     )}
 
-                                                    {/* Dot indicators — pill style active dot */}
+                                                    {/* Dot indicators */}
                                                     {modalProduct.images.length > 1 && (
                                                         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 items-center z-20">
                                                             {modalProduct.images.map((_, idx) => (
@@ -496,8 +583,8 @@ export default function ProductsPage() {
                                                                     style={{
                                                                         width:  idx === modalImageIdx ? '22px' : '7px',
                                                                         height: '7px',
-                                                                        background: idx === modalImageIdx ? '#FF9E1A' : 'rgba(255,255,255,0.65)',
-                                                                        boxShadow: '0 1px 3px rgba(0,0,0,0.35)',
+                                                                        background: idx === modalImageIdx ? '#FF9E1A' : 'rgba(0,0,0,0.18)',
+                                                                        boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
                                                                     }}
                                                                 />
                                                             ))}
@@ -505,9 +592,9 @@ export default function ProductsPage() {
                                                     )}
                                                 </div>
 
-                                                {/* Thumbnail strip */}
+                                                {/* Thumbnail strip — white bg, contain */}
                                                 {modalProduct.images.length > 1 && (
-                                                    <div className="flex gap-2 px-4 py-3 overflow-x-auto thumb-scroll bg-white border-b border-gray-100">
+                                                    <div className="flex gap-2 px-4 py-3 overflow-x-auto thumb-scroll bg-white border-t border-gray-100">
                                                         {modalProduct.images.map((img, idx) => (
                                                             <button
                                                                 key={idx}
@@ -517,35 +604,35 @@ export default function ProductsPage() {
                                                                     setIsSliding(true);
                                                                     setTimeout(() => { setModalImageIdx(idx); setIsSliding(false); }, 260);
                                                                 }}
-                                                                className="shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all duration-200"
+                                                                className="shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all duration-200 bg-white flex items-center justify-center"
                                                                 style={{
-                                                                    borderColor: idx === modalImageIdx ? '#FF9E1A' : 'transparent',
-                                                                    opacity:     idx === modalImageIdx ? 1 : 0.55,
+                                                                    borderColor: idx === modalImageIdx ? '#FF9E1A' : '#e5e7eb',
+                                                                    opacity:     idx === modalImageIdx ? 1 : 0.6,
                                                                     transform:   idx === modalImageIdx ? 'scale(1.06)' : 'scale(1)',
                                                                     boxShadow:   idx === modalImageIdx ? '0 2px 10px rgba(255,158,26,0.35)' : 'none',
                                                                 }}>
-                                                                <img src={img} alt="" className="w-full h-full object-cover" />
+                                                                <img src={img} alt={`${productName(modalProduct)} - Conan Tools`} className="w-full h-full object-contain p-1.5" />
                                                             </button>
                                                         ))}
                                                     </div>
                                                 )}
                                             </div>
                                         ) : (
-                                            <div className="w-full aspect-video flex items-center justify-center text-6xl rounded-t-2xl"
-                                                style={{ background: 'rgba(255,158,26,0.06)' }}>📦</div>
+                                            <div className="w-full aspect-video flex items-center justify-center text-6xl rounded-t-2xl bg-white border-b border-gray-100">
+                                                📦
+                                            </div>
                                         )}
 
                                         {/* ── INFO ── */}
-                                        <div className="p-6 flex flex-col gap-5">
+<div className="p-6 flex flex-col gap-5 overflow-y-auto flex-1">
 
                                             {/* Title + close */}
                                             <div className="flex items-start justify-between gap-4">
                                                 <h2 className="text-xl font-extrabold text-gray-900 leading-tight">{productName(modalProduct)}</h2>
-                                                <button onClick={() => setModalProduct(null)}
+                                                <button onClick={closeModal}
                                                     className="shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200 hover:text-gray-700 transition-colors text-sm">✕</button>
                                             </div>
 
-                                            {/* Product description */}
                                             {productDesc(modalProduct) && (
                                                 <p className="text-sm text-gray-500 leading-relaxed -mt-2">{productDesc(modalProduct)}</p>
                                             )}
@@ -562,22 +649,17 @@ export default function ProductsPage() {
                                                                 className="variant-row rounded-xl border border-gray-100 hover:border-orange-200 overflow-hidden"
                                                                 style={{ background: 'rgba(255,158,26,0.018)' }}>
                                                                 <div className="flex items-center gap-3 px-4 py-3">
-                                                                    {/* Code badge */}
                                                                     {v.code && (
                                                                         <span className="shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold font-mono whitespace-nowrap"
                                                                             style={{ background: 'rgba(255,158,26,0.12)', color: '#FF9E1A' }}>
                                                                             {v.code}
                                                                         </span>
                                                                     )}
-
-                                                                    {/* Description */}
                                                                     {variantDesc(v) && (
                                                                         <span className="text-sm text-gray-700 leading-snug flex-1 font-medium">
                                                                             {variantDesc(v)}
                                                                         </span>
                                                                     )}
-
-                                                                    {/* Buy Now — per variant */}
                                                                     {v.link && (
                                                                         <a
                                                                             href={v.link}
@@ -636,38 +718,40 @@ interface ProductCardProps {
     name: string;
     description: string | null | undefined;
     isRtl: boolean;
+    groupSlug: string;
+    locale: string;
     onClick: () => void;
 }
 
-function ProductCard({ product, name, description, isRtl, onClick }: ProductCardProps) {
+function ProductCard({ product, name, description, isRtl, groupSlug, locale, onClick }: ProductCardProps) {
     const [imgFailed, setImgFailed] = useState(false);
     const showImage = product.image && !imgFailed;
 
     return (
-        <button
-            onClick={onClick}
-            className="border border-gray-100 rounded-xl overflow-hidden group hover:border-[#FF9E1A] hover:shadow-md transition-all duration-200 flex flex-col h-full text-left w-full"
+        <a
+            href={`/${locale}/products/${groupSlug}/${product.slug}`}
+            onClick={e => { e.preventDefault(); onClick(); }}
+            className="border border-gray-100 rounded-xl overflow-hidden group hover:border-[#FF9E1A] hover:shadow-md transition-all duration-200 flex flex-col h-full text-left w-full bg-white"
             style={{ transition: 'transform 0.18s, box-shadow 0.2s, border-color 0.18s' }}
             onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-4px)')}
             onMouseLeave={e => (e.currentTarget.style.transform = '')}
         >
-            <div className="overflow-hidden w-full aspect-[4/3] bg-gray-50 relative">
+            {/* Image area — white bg, object-contain so full product is always visible */}
+            <div className="w-full aspect-[4/3] bg-white flex items-center justify-center overflow-hidden relative border-b border-gray-100">
                 {showImage ? (
                     <img
                         src={product.image!}
-                        alt={name}
-                        className="w-full h-full object-cover block bg-gray-100"
-                        style={{ transition: 'transform 0.35s ease' }}
-                        onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.05)')}
-                        onMouseLeave={e => (e.currentTarget.style.transform = '')}
+                        alt={`${name} - Conan Tools`}
+                        className="w-full h-full object-contain p-3 transition-transform duration-300 ease-out group-hover:scale-105"
                         onError={() => setImgFailed(true)}
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center text-4xl"
-                        style={{ background: 'rgba(255,158,26,0.06)' }}>📦</div>
+                    <span className="text-4xl select-none">📦</span>
                 )}
+
+                {/* Badges */}
                 {product.images.length > 1 && (
-                    <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-black/40 text-white backdrop-blur-sm">
+                    <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-black/25 text-gray-800 backdrop-blur-sm border border-black/10">
                         {product.images.length} 🖼
                     </span>
                 )}
@@ -678,8 +762,10 @@ function ProductCard({ product, name, description, isRtl, onClick }: ProductCard
                     </span>
                 )}
             </div>
+
+            {/* Text */}
             <div className="p-4 flex flex-col flex-1">
-                <div className="font-bold text-sm leading-snug mb-1">{name}</div>
+                <div className="font-bold text-sm leading-snug mb-1 text-gray-900">{name}</div>
                 {description && (
                     <div className="text-xs text-gray-400 leading-relaxed line-clamp-2 mb-2 flex-1">{description}</div>
                 )}
@@ -687,6 +773,6 @@ function ProductCard({ product, name, description, isRtl, onClick }: ProductCard
                     {isRtl ? 'عرض التفاصيل →' : 'View details →'}
                 </div>
             </div>
-        </button>
+        </a>
     );
 }

@@ -7,6 +7,8 @@ export const ui = {
         products: 'Products', 
         distributors: 'Distributors',
         about: 'About', 
+                    warranty: "Warranty",
+
         contact: 'Contact', 
         cta: 'Get a Quote' 
     },        hero: {
@@ -56,6 +58,8 @@ export const ui = {
         distributors: 'الموزعين',
         about: 'من نحن', 
         contact: 'اتصل بنا', 
+            warranty: "الضمان",
+
         cta: 'طلب عرض سعر' 
     },
         hero: {

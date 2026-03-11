@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useState, type FormEvent } from 'react';
 import { router } from '@inertiajs/react';
 import type { Lang } from '@/types/I18n';
+import Seo from '@/components/Seo';
 
 // ─── Animations ─────────────────────────────────────────────
 
@@ -93,6 +94,24 @@ export default function ContactPage() {
 
                 return (
                     <>
+                            <Seo
+          title={
+            isRtl
+              ? 'تواصل معنا | كونان تولز – مصر'
+              : 'Contact Us | Conan Tools – Egypt'
+          }
+          description={
+            isRtl
+              ? 'تواصل مع فريق كونان تولز في مصر للاستفسارات وطلبات الدعم. أرسل رسالة وسنرد خلال 24 ساعة.'
+              : "Get in touch with Conan Tools in Egypt for inquiries and support. Send us a message and we'll respond within 24 hours."
+          }
+          keywords={
+            isRtl
+              ? 'كونان تولز, اتصل بنا, استفسار, الدعم, الدقي, القاهرة'
+              : 'Conan Tools, contact us, inquiry, support, Dokki, Cairo, Egypt'
+          }
+    image="/logo.png"
+        />
                         {/* HERO */}
                         <motion.section
                             initial="hidden"

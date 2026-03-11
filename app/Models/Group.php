@@ -11,6 +11,7 @@ class Group extends Model
         'name',
         'ar_name',
         'image',
+        'slug',
     ];
 
     public function products(): HasMany

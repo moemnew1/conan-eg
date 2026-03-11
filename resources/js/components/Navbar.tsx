@@ -22,6 +22,7 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
         { label: c.nav.products, path: "/products" },
         { label: c.nav.distributors, path: "/distributors" },
         { label: c.nav.about, path: "/about" },
+        { label: c.nav.warranty, path: "/warranty" },
         { label: c.nav.contact, path: "/contact" },
     ];
 

@@ -3,6 +3,7 @@ import { usePage } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MainLayout from '@/layouts/Mainlayout';
 import { FaPhoneAlt, FaWhatsapp, FaMapMarkerAlt, FaCompass } from 'react-icons/fa';
+import Seo from '@/components/Seo';
 
 interface Phone {
   id: number;
@@ -108,7 +109,24 @@ export default function DistributorsPage() {
   return (
     <MainLayout>
       {({ lang, isRtl }) => (
+        
         <div className="min-h-screen bg-slate-50">
+          <Seo
+    title={
+        isRtl
+            ? 'موزعو كونان تولز | اعثر على أقرب موزع في مصر'
+            : 'Conan Tools Distributors | Find a Distributor Near You'
+    }
+    description={
+        isRtl
+            ? 'اعثر على أقرب موزع لمنتجات كونان تولز في مصر. تواصل مع الموزعين المعتمدين للحصول على الأدوات الاحترافية والمعدات الصناعية عالية الجودة.'
+            : 'Find the nearest Conan Tools distributor in Egypt. Contact authorized distributors for professional tools and high-quality industrial equipment.'
+    }
+        keywords={isRtl
+        ? 'كونان تولز, الموزعين, أدوات, مصر, أدوات كهربائية, أدوات يدوية'
+        : 'Conan Tools, distributors, tools, Egypt, power tools, hand tools'}
+    image="/logo.png"
+/>
           {/* HERO SECTION */}
           <section className="relative pt-24 pb-20 px-[5%] bg-slate-900 text-white overflow-hidden">
             <div className="absolute inset-0 opacity-10 pointer-events-none">

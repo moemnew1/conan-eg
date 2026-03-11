@@ -15,6 +15,7 @@ class Product extends Model
         'link',
         'description',
         'ar_description',
+        'slug',
     ];
 
     public function group(): BelongsTo
